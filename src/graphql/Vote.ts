@@ -22,12 +22,10 @@ export const VoteMutation = extendType({
         const { linkId } = args;
 
         if (!userId) {
-          // 1
           throw new Error("Cannot vote without logging in.");
         }
 
         const link = await context.prisma.link.update({
-          // 2
           where: {
             id: linkId,
           },
@@ -49,7 +47,6 @@ export const VoteMutation = extendType({
         }
 
         return {
-          // 3
           link,
           user,
         };

@@ -60,9 +60,9 @@ enum Sort {
 type User {
   email: String!
   id: Int!
-  links: [Link!]!
+  links: [Link!]
   name: String!
-  votes: [Link!]!
+  votes: [Link!]
 }
 
 type Vote {

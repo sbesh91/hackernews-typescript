@@ -54,9 +54,9 @@ export const Link = objectType({
 export const Feed = objectType({
   name: "Feed",
   definition(t) {
-    t.nonNull.list.nonNull.field("links", { type: Link }); // 1
-    t.nonNull.int("count"); // 2
-    t.id("id"); // 3
+    t.nonNull.list.nonNull.field("links", { type: Link });
+    t.nonNull.int("count");
+    t.id("id");
   },
 });
 
@@ -121,14 +121,11 @@ export const LinkQuery = extendType({
 });
 
 export const LinkPost = extendType({
-  // 1
   type: "Mutation",
   definition(t) {
     t.nonNull.field("post", {
-      // 2
       type: "Link",
       args: {
-        // 3
         description: nonNull(stringArg()),
         url: nonNull(stringArg()),
       },
@@ -138,7 +135,6 @@ export const LinkPost = extendType({
         const { userId } = context;
 
         if (!userId) {
-          // 1
           throw new Error("Cannot post without logging in.");
         }
 
@@ -146,7 +142,7 @@ export const LinkPost = extendType({
           data: {
             description,
             url,
-            postedBy: { connect: { id: userId } }, // 2
+            postedBy: { connect: { id: userId } },
           },
         });
 
@@ -155,7 +151,6 @@ export const LinkPost = extendType({
     });
 
     t.field("patch", {
-      // 2
       type: "Link",
       args: {
         id: nonNull(idArg()),
@@ -164,7 +159,7 @@ export const LinkPost = extendType({
       },
 
       resolve(parent, args, context) {
-        const { description, url, id } = args; // 4
+        const { description, url, id } = args;
 
         let patch: Partial<LinkDb> = {};
 
@@ -184,7 +179,6 @@ export const LinkPost = extendType({
     });
 
     t.field("delete", {
-      // 3
       type: "Link",
       args: {
         id: nonNull(idArg()),

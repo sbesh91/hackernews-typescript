@@ -76,7 +76,9 @@ export interface NexusGenObjects {
   User: { // root type
     email: string; // String!
     id: number; // Int!
+    links?: NexusGenRootTypes['Link'][] | null; // [Link!]
     name: string; // String!
+    votes?: NexusGenRootTypes['Link'][] | null; // [Link!]
   }
   Vote: { // root type
     link: NexusGenRootTypes['Link']; // Link!
@@ -127,9 +129,9 @@ export interface NexusGenFieldTypes {
   User: { // field return type
     email: string; // String!
     id: number; // Int!
-    links: NexusGenRootTypes['Link'][]; // [Link!]!
+    links: NexusGenRootTypes['Link'][] | null; // [Link!]
     name: string; // String!
-    votes: NexusGenRootTypes['Link'][]; // [Link!]!
+    votes: NexusGenRootTypes['Link'][] | null; // [Link!]
   }
   Vote: { // field return type
     link: NexusGenRootTypes['Link']; // Link!
