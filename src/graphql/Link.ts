@@ -1,4 +1,3 @@
-import { NexusGenObjects } from "../../nexus-typegen";
 import {
   arg,
   enumType,
@@ -11,7 +10,8 @@ import {
   objectType,
   stringArg,
 } from "nexus";
-import { Prisma } from "@prisma/client";
+import { Link as LinkDb, Prisma } from "@prisma/client";
+import { filterIncludes } from "../utils/filter-includes";
 
 export const LinkOrderByInput = inputObjectType({
   name: "LinkOrderByInput",
@@ -22,36 +22,31 @@ export const LinkOrderByInput = inputObjectType({
   },
 });
 
+export const LinkIncludes = inputObjectType({
+  name: "LinkIncludes",
+  definition(t) {
+    t.field("postedBy", { type: "Boolean", default: false });
+    t.field("voters", { type: "Boolean", default: false });
+  },
+});
+
 export const Sort = enumType({
   name: "Sort",
   members: ["asc", "desc"],
 });
 
 export const Link = objectType({
-  name: "Link", // <- Name of your type
+  name: "Link",
   definition(t) {
     t.nonNull.int("id");
     t.nonNull.string("description");
     t.nonNull.string("url");
-    t.nonNull.dateTime("createdAt"); // 1
+    t.nonNull.dateTime("createdAt");
     t.field("postedBy", {
-      // 1
       type: "User",
-      resolve(parent, args, context) {
-        // 2
-        return context.prisma.link
-          .findUnique({ where: { id: parent.id } })
-          .postedBy();
-      },
     });
-    t.nonNull.list.nonNull.field("voters", {
-      // 1
+    t.list.nonNull.field("voters", {
       type: "User",
-      resolve(parent, args, context) {
-        return context.prisma.link
-          .findUnique({ where: { id: parent.id } })
-          .voters();
-      },
     });
   },
 });
@@ -66,17 +61,16 @@ export const Feed = objectType({
 });
 
 export const LinkQuery = extendType({
-  // 2
   type: "Query",
   definition(t) {
     t.nonNull.field("feed", {
-      // 1
       type: "Feed",
       args: {
         filter: stringArg(),
         skip: intArg(),
         take: intArg(),
         orderBy: arg({ type: list(nonNull(LinkOrderByInput)) }),
+        includes: arg({ type: LinkIncludes }),
       },
       async resolve(parent, args, context) {
         const where = args.filter
@@ -95,13 +89,13 @@ export const LinkQuery = extendType({
           orderBy: args?.orderBy as
             | Prisma.Enumerable<Prisma.LinkOrderByWithRelationInput>
             | undefined,
+          include: filterIncludes(args.includes),
         });
 
-        const count = await context.prisma.link.count({ where }); // 2
-        const id = `main-feed:${JSON.stringify(args)}`; // 3
+        const count = await context.prisma.link.count({ where });
+        const id = `main-feed:${JSON.stringify(args)}`;
 
         return {
-          // 4
           links,
           count,
           id,
@@ -114,11 +108,13 @@ export const LinkQuery = extendType({
       type: "Link",
       args: {
         id: nonNull(idArg()),
+        includes: arg({ type: LinkIncludes }),
       },
       resolve(parent, args, context, info) {
         return context.prisma.link.findUnique({
           where: { id: Number(args.id) },
-        }); // 1
+          include: filterIncludes(args.includes),
+        });
       },
     });
   },
@@ -170,7 +166,7 @@ export const LinkPost = extendType({
       resolve(parent, args, context) {
         const { description, url, id } = args; // 4
 
-        let patch: Partial<NexusGenObjects["Link"]> = {};
+        let patch: Partial<LinkDb> = {};
 
         if (description) {
           patch.description = description;

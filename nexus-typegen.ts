@@ -29,6 +29,10 @@ declare global {
 }
 
 export interface NexusGenInputs {
+  LinkIncludes: { // input type
+    postedBy?: boolean | null; // Boolean
+    voters?: boolean | null; // Boolean
+  }
   LinkOrderByInput: { // input type
     createdAt?: NexusGenEnums['Sort'] | null; // Sort
     description?: NexusGenEnums['Sort'] | null; // Sort
@@ -63,7 +67,9 @@ export interface NexusGenObjects {
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     description: string; // String!
     id: number; // Int!
+    postedBy?: NexusGenRootTypes['User'] | null; // User
     url: string; // String!
+    voters?: NexusGenRootTypes['User'][] | null; // [User!]
   }
   Mutation: {};
   Query: {};
@@ -104,7 +110,7 @@ export interface NexusGenFieldTypes {
     id: number; // Int!
     postedBy: NexusGenRootTypes['User'] | null; // User
     url: string; // String!
-    voters: NexusGenRootTypes['User'][]; // [User!]!
+    voters: NexusGenRootTypes['User'][] | null; // [User!]
   }
   Mutation: { // field return type
     delete: NexusGenRootTypes['Link'] | null; // Link
@@ -204,12 +210,14 @@ export interface NexusGenArgTypes {
   Query: {
     feed: { // args
       filter?: string | null; // String
+      includes?: NexusGenInputs['LinkIncludes'] | null; // LinkIncludes
       orderBy?: NexusGenInputs['LinkOrderByInput'][] | null; // [LinkOrderByInput!]
       skip?: number | null; // Int
       take?: number | null; // Int
     }
     link: { // args
       id: string; // ID!
+      includes?: NexusGenInputs['LinkIncludes'] | null; // LinkIncludes
     }
   }
 }

@@ -24,7 +24,12 @@ type Link {
   id: Int!
   postedBy: User
   url: String!
-  voters: [User!]!
+  voters: [User!]
+}
+
+input LinkIncludes {
+  postedBy: Boolean = false
+  voters: Boolean = false
 }
 
 input LinkOrderByInput {
@@ -43,8 +48,8 @@ type Mutation {
 }
 
 type Query {
-  feed(filter: String, orderBy: [LinkOrderByInput!], skip: Int, take: Int): Feed!
-  link(id: ID!): Link
+  feed(filter: String, includes: LinkIncludes, orderBy: [LinkOrderByInput!], skip: Int, take: Int): Feed!
+  link(id: ID!, includes: LinkIncludes): Link
 }
 
 enum Sort {
