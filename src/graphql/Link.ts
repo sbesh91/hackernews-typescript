@@ -10,8 +10,14 @@ import {
   objectType,
   stringArg,
 } from "nexus";
-import { Link as LinkDb, Prisma } from "@prisma/client";
+import { Link as LinkDb, Prisma, User } from "@prisma/client";
 import { filterIncludes } from "../utils/filter-includes";
+import { NexusGenRootTypes } from "../../nexus-typegen";
+
+type LinkIncludes = LinkDb & {
+  postedBy?: User | null;
+  voters?: User[] | null;
+};
 
 export const LinkOrderByInput = inputObjectType({
   name: "LinkOrderByInput",
@@ -39,7 +45,7 @@ export const Link = objectType({
   name: "Link",
   definition(t) {
     t.nonNull.int("id");
-    t.nonNull.string("description");
+    t.nonNull.string("title");
     t.nonNull.string("url");
     t.nonNull.dateTime("createdAt");
     t.field("postedBy", {
@@ -50,6 +56,18 @@ export const Link = objectType({
     });
   },
 });
+
+function getLinkDto(link: LinkIncludes): NexusGenRootTypes["Link"] {
+  const { id, description, createdAt, postedBy, voters, url } = link;
+  return {
+    id,
+    title: description,
+    createdAt,
+    postedBy,
+    voters,
+    url,
+  };
+}
 
 export const Feed = objectType({
   name: "Feed",
@@ -96,7 +114,7 @@ export const LinkQuery = extendType({
         const id = `main-feed:${JSON.stringify(args)}`;
 
         return {
-          links,
+          links: links.map(getLinkDto),
           count,
           id,
         };
@@ -104,17 +122,22 @@ export const LinkQuery = extendType({
     });
 
     t.field("link", {
-      // 3
       type: "Link",
       args: {
         id: nonNull(idArg()),
         includes: arg({ type: LinkIncludes }),
       },
-      resolve(parent, args, context, info) {
-        return context.prisma.link.findUnique({
+      async resolve(parent, args, context, info) {
+        const data = await context.prisma.link.findUnique({
           where: { id: Number(args.id) },
           include: filterIncludes(args.includes),
         });
+
+        if (!data) {
+          return null;
+        }
+
+        return getLinkDto(data);
       },
     });
   },
@@ -130,7 +153,7 @@ export const LinkPost = extendType({
         url: nonNull(stringArg()),
       },
 
-      resolve(parent, args, context) {
+      async resolve(parent, args, context) {
         const { description, url } = args;
         const { userId } = context;
 
@@ -138,7 +161,7 @@ export const LinkPost = extendType({
           throw new Error("Cannot post without logging in.");
         }
 
-        const newLink = context.prisma.link.create({
+        const newLink = await context.prisma.link.create({
           data: {
             description,
             url,
@@ -146,7 +169,7 @@ export const LinkPost = extendType({
           },
         });
 
-        return newLink;
+        return getLinkDto(newLink);
       },
     });
 
@@ -158,7 +181,7 @@ export const LinkPost = extendType({
         url: stringArg(),
       },
 
-      resolve(parent, args, context) {
+      async resolve(parent, args, context) {
         const { description, url, id } = args;
 
         let patch: Partial<LinkDb> = {};
@@ -171,10 +194,12 @@ export const LinkPost = extendType({
           patch.url = url;
         }
 
-        return context.prisma.link.update({
-          data: patch,
-          where: { id: Number(id) },
-        });
+        return getLinkDto(
+          await context.prisma.link.update({
+            data: patch,
+            where: { id: Number(id) },
+          })
+        );
       },
     });
 
@@ -183,10 +208,12 @@ export const LinkPost = extendType({
       args: {
         id: nonNull(idArg()),
       },
-      resolve(parent, args, context, info) {
-        return context.prisma.link.delete({
-          where: { id: Number(args.id) },
-        });
+      async resolve(parent, args, context, info) {
+        return getLinkDto(
+          await context.prisma.link.delete({
+            where: { id: Number(args.id) },
+          })
+        );
       },
     });
   },

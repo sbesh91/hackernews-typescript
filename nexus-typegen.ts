@@ -65,9 +65,9 @@ export interface NexusGenObjects {
   }
   Link: { // root type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
-    description: string; // String!
     id: number; // Int!
     postedBy?: NexusGenRootTypes['User'] | null; // User
+    title: string; // String!
     url: string; // String!
     voters?: NexusGenRootTypes['User'][] | null; // [User!]
   }
@@ -108,9 +108,9 @@ export interface NexusGenFieldTypes {
   }
   Link: { // field return type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
-    description: string; // String!
     id: number; // Int!
     postedBy: NexusGenRootTypes['User'] | null; // User
+    title: string; // String!
     url: string; // String!
     voters: NexusGenRootTypes['User'][] | null; // [User!]
   }
@@ -151,9 +151,9 @@ export interface NexusGenFieldTypeNames {
   }
   Link: { // field return type name
     createdAt: 'DateTime'
-    description: 'String'
     id: 'Int'
     postedBy: 'User'
+    title: 'String'
     url: 'String'
     voters: 'User'
   }
