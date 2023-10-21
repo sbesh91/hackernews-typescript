@@ -93,18 +93,6 @@ function getFieldNodeTree(info: GraphQLResolveInfo) {
   return result;
 }
 
-// include: {
-//   voters: {
-//     include: {
-//       votes: {
-//         include: {
-
-//         }
-//       }
-//     }
-//   }
-// }
-
 function getAsIncludes(
   iterationResponse: IterateResponse[],
   ignore: Set<string>
