@@ -13,7 +13,7 @@ import {
 import { Link as LinkDb, Prisma, User } from "@prisma/client";
 import { filterIncludes } from "../utils/filter-includes";
 import { NexusGenRootTypes } from "../../nexus-typegen";
-import { FieldNode, GraphQLResolveInfo } from "graphql";
+import { getAsIncludes } from "../utils/auto-include";
 
 type LinkIncludes = LinkDb & {
   postedBy?: User | null;
@@ -70,56 +70,6 @@ function getLinkDto(link: LinkIncludes): NexusGenRootTypes["Link"] {
   };
 }
 
-type IterateResponse = {
-  name: string;
-  names: Array<IterateResponse> | null;
-};
-function getFieldNodeTree(info: GraphQLResolveInfo) {
-  const result = info.fieldNodes.flatMap((field) => iterate(field));
-
-  function iterate(field: FieldNode): IterateResponse {
-    const set = field.selectionSet?.selections.filter(
-      (value) => (value as FieldNode).selectionSet
-    );
-
-    const names = set?.flatMap((value) => iterate(value as FieldNode));
-
-    return {
-      name: field.name.value,
-      names: names && names.length > 0 ? names : null,
-    };
-  }
-
-  return result;
-}
-
-function getAsIncludes(
-  iterationResponse: IterateResponse[],
-  ignore: Set<string>
-): Record<string, any> {
-  const result = iterate(iterationResponse);
-  console.log(ignore);
-  function iterate(ir: IterateResponse[]) {
-    return ir.reduce<Record<string, any>>((prev, { name, names }) => {
-      const hasNames = names && names?.length > 0;
-
-      if (ignore.has(name) && hasNames) {
-        prev = iterate(names);
-      } else if (hasNames) {
-        prev[name] = {
-          include: iterate(names),
-        };
-      } else {
-        prev[name] = true;
-      }
-
-      return prev;
-    }, {});
-  }
-
-  return result;
-}
-
 export const Feed = objectType({
   name: "Feed",
   definition(t) {
@@ -142,11 +92,6 @@ export const LinkQuery = extendType({
         includes: arg({ type: LinkIncludes }),
       },
       async resolve(parent, args, context, info) {
-        console.log(
-          JSON.stringify(
-            getAsIncludes(getFieldNodeTree(info), new Set(["feed", "links"]))
-          )
-        );
         const where = args.filter
           ? {
               OR: [
@@ -163,10 +108,7 @@ export const LinkQuery = extendType({
           orderBy: args?.orderBy as
             | Prisma.Enumerable<Prisma.LinkOrderByWithRelationInput>
             | undefined,
-          include: getAsIncludes(
-            getFieldNodeTree(info),
-            new Set(["feed", "links"])
-          ),
+          include: getAsIncludes(info, new Set(["feed", "links"])),
         });
 
         const count = await context.prisma.link.count({ where });
